@@ -41,9 +41,9 @@ logger = logging.getLogger(__name__)
 
 # To run these tests, create a helper toggle named volttrontest in your Home Assistant instance.
 # This can be done by going to Settings > Devices & services > Helpers > Create Helper > Toggle
-HOMEASSISTANT_TEST_IP = ""
+HOMEASSISTANT_TEST_IP = "localhost"
 ACCESS_TOKEN = ""
-PORT = ""
+PORT = "8123"
 
 skip_msg = "Some configuration variables are not set. Check HOMEASSISTANT_TEST_IP, ACCESS_TOKEN, and PORT"
 

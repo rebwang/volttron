@@ -405,3 +405,43 @@ class Interface(BasicRevert, BaseInterface):
             print(f"Successfully set {entity_id} to {state}")
         else:
             print(f"Failed to set {entity_id} to {state}: {response.text}")
+
+    def turn_on_fan(self, entity_id):
+        url = f"http://{self.ip_address}:{self.port}/api/services/fan/turn_on"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "entity_id": f"{entity_id}"
+        }
+
+        _post_method(url, headers, payload, f"turn on {entity_id}")
+
+    def turn_off_fan(self, entity_id):
+        url = f"http://{self.ip_address}:{self.port}/api/services/fan/turn_off"
+
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "entity_id": f"{entity_id}"
+        }
+
+        _post_method(url, headers, payload, f"turn off {entity_id}")
+    
+    def set_fan_speed(self, entity_id, speed):
+        url = f"http://{self.ip_address}:{self.port}/api/services/fan/set_speed"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "entity_id": entity_id,
+            "speed": speed
+        }
+
+        _post_method(url, headers, payload, f"set speed of {entity_id} to {speed}")
