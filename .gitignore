@@ -40,3 +40,7 @@ rabbitmq-server.download.tar.xz
 *ecobee_*.json
 .env*
 dist/
+
+# Environment variables with secrets
+.env
+*.env
