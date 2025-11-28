@@ -178,9 +178,33 @@ class Interface(BasicRevert, BaseInterface):
                 error_msg = f"Currently set_point is supported only for thermostats state and temperature {register.entity_id}"
                 _log.error(error_msg)
                 raise ValueError(error_msg)
+        
+        # Changing fan values
+        elif "fan." in register.entity_id:
+            if entity_point == "state":
+                if isinstance(register.value, int) and register.value in [0, 1]:
+                    if register.value == 1:
+                        self.turn_on_fan(register.entity_id)
+                    elif register.value == 0:
+                        self.turn_off_fan(register.entity_id)
+                else:
+                    error_msg = f"State value for {register.entity_id} should be an integer value of 1 or 0"
+                    _log.error(error_msg)
+                    raise ValueError(error_msg)
+            elif entity_point == "percentage":
+                if isinstance(register.value, int) and 0 <= register.value <= 100:
+                    self.set_fan_speed(register.entity_id, register.value)
+                else:
+                    error_msg = "Fan percentage should be an integer between 0 and 100"
+                    _log.error(error_msg)
+                    raise ValueError(error_msg)
+            else:
+                error_msg = f"Unexpected point_name {point_name} for fan {register.entity_id}"
+                _log.error(error_msg)
+                raise ValueError(error_msg)
         else:
             error_msg = f"Unsupported entity_id: {register.entity_id}. " \
-                        f"Currently set_point is supported only for thermostats and lights"
+                        f"Currently set_point is supported only for thermostats, lights, fans, and input_booleans"
             _log.error(error_msg)
             raise ValueError(error_msg)
         return register.value
@@ -251,7 +275,23 @@ class Interface(BasicRevert, BaseInterface):
                         attribute = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
                         register.value = attribute
                         result[register.point_name] = attribute
-                else:  # handling all devices that are not thermostats or light states
+                # handling fan states
+                elif "fan." in entity_id:
+                    if entity_point == "state":
+                        state = entity_data.get("state", None)
+                        # Converting fan states to numbers
+                        if state == "on":
+                            register.value = 1
+                            result[register.point_name] = 1
+                        elif state == "off":
+                            register.value = 0
+                            result[register.point_name] = 0
+                    else:
+                        # Assigning fan attributes (percentage, preset_mode, etc.)
+                        attribute = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
+                        register.value = attribute
+                        result[register.point_name] = attribute
+                else:  # handling all devices that are not thermostats, lights, or fans
                     if entity_point == "state":
 
                         state = entity_data.get("state", None)
