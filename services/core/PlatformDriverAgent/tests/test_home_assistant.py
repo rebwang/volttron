@@ -313,3 +313,174 @@ def fan_config_store(volttron_instance, platform_driver):
         HOMEASSISTANT_FAN_DEVICE_TOPIC
     )
     gevent.sleep(0.1)
+
+# ==================== SWITCH TESTS ====================
+
+# Switch test configuration
+HOMEASSISTANT_TEST_IP = os.environ.get("HOMEASSISTANT_TEST_SWITCH_IP", "")
+ACCESS_TOKEN = os.environ.get("HOMEASSISTANT_SWITCH_ACCESS_TOKEN", "")
+PORT = os.environ.get("HOMEASSISTANT_SWITCH_PORT", "8123")
+HOMEASSISTANT_TEST_SWITCH_ENTITY = os.environ.get("HOMEASSISTANT_TEST_SWITCH_ENTITY", "")
+
+skip_switch_tests = pytest.mark.skipif(
+    not HOMEASSISTANT_TEST_SWITCH_ENTITY,
+    reason="Switch entity not configured. Set HOMEASSISTANT_TEST_SWITCH_ENTITY to run switch tests."
+)
+
+HOMEASSISTANT_SWITCH_DEVICE_TOPIC = "devices/home_assistant_switch"
+
+
+@skip_switch_tests
+def test_get_switch_state(volttron_instance, switch_config_store):
+    """Test getting switch state - should return 0 (off) or 1 (on)"""
+    agent = volttron_instance.dynamic_agent
+    result = agent.vip.rpc.call(PLATFORM_DRIVER, 'get_point', 'home_assistant_switch', 'switch_state').get(timeout=20)
+    assert result in [0, 1, "off", "on"], f"Switch state should be 0/1 or on/off, got {result}"
+
+
+@skip_switch_tests
+def test_switch_scrape_all(volttron_instance, switch_config_store):
+    """Test scraping all switch data points"""
+    agent = volttron_instance.dynamic_agent
+    result = agent.vip.rpc.call(PLATFORM_DRIVER, 'scrape_all', 'home_assistant_switch').get(timeout=20)
+    assert 'switch_state' in result, "Result should contain switch_state"
+    assert result['switch_state'] in [0, 1, "on", "off"], f"Switch state should be valid, got {result['switch_state']}"
+
+
+@skip_switch_tests
+def test_set_switch_on(volttron_instance, switch_config_store):
+    """Test turning switch on"""
+    agent = volttron_instance.dynamic_agent
+    # Turn switch off first
+    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 0)
+    gevent.sleep(3)
+    
+    # Turn switch on
+    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 1)
+    gevent.sleep(5)
+    
+    result = agent.vip.rpc.call(PLATFORM_DRIVER, 'get_point', 'home_assistant_switch', 'switch_state').get(timeout=20)
+    assert result in [1, "on"], f"Switch should be on, got {result}"
+
+
+@skip_switch_tests
+def test_set_switch_off(volttron_instance, switch_config_store):
+    """Test turning switch off"""
+    agent = volttron_instance.dynamic_agent
+    # Turn switch on first
+    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 1)
+    gevent.sleep(3)
+    
+    # Turn switch off
+    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 0)
+    gevent.sleep(5)
+    
+    result = agent.vip.rpc.call(PLATFORM_DRIVER, 'get_point', 'home_assistant_switch', 'switch_state').get(timeout=20)
+    assert result in [0, "off"], f"Switch should be off, got {result}"
+
+
+@skip_switch_tests
+def test_switch_toggle(volttron_instance, switch_config_store):
+    """Test toggling switch multiple times"""
+    agent = volttron_instance.dynamic_agent
+    
+    # Turn on
+    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 1)
+    gevent.sleep(3)
+    result1 = agent.vip.rpc.call(PLATFORM_DRIVER, 'get_point', 'home_assistant_switch', 'switch_state').get(timeout=20)
+    assert result1 in [1, "on"], f"Switch should be on after first toggle, got {result1}"
+    
+    # Turn off
+    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 0)
+    gevent.sleep(3)
+    result2 = agent.vip.rpc.call(PLATFORM_DRIVER, 'get_point', 'home_assistant_switch', 'switch_state').get(timeout=20)
+    assert result2 in [0, "off"], f"Switch should be off after second toggle, got {result2}"
+    
+    # Turn on again
+    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 1)
+    gevent.sleep(3)
+    result3 = agent.vip.rpc.call(PLATFORM_DRIVER, 'get_point', 'home_assistant_switch', 'switch_state').get(timeout=20)
+    assert result3 in [1, "on"], f"Switch should be on after third toggle, got {result3}"
+
+
+@skip_switch_tests
+def test_invalid_switch_value(volttron_instance, switch_config_store):
+    """Test that invalid switch values are handled correctly"""
+    agent = volttron_instance.dynamic_agent
+    
+    # Try to set invalid value (should fail gracefully or be rejected)
+    try:
+        agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant_switch', 'switch_state', 2)
+        gevent.sleep(2)
+        # If it doesn't raise an error, verify the state didn't change to an invalid value
+        result = agent.vip.rpc.call(PLATFORM_DRIVER, 'get_point', 'home_assistant_switch', 'switch_state').get(timeout=20)
+        assert result in [0, 1, "on", "off"], f"Switch state should remain valid even after invalid input, got {result}"
+    except Exception as e:
+        # Expected to raise an error for invalid value
+        assert "should be an integer value of 1 or 0" in str(e) or "ValueError" in str(type(e).__name__), \
+            f"Expected ValueError for invalid switch value, got {type(e).__name__}: {e}"
+
+
+@pytest.fixture(scope="module")
+def switch_config_store(volttron_instance, platform_driver):
+    """Fixture for configuring switch tests"""
+    capabilities = [{"edit_config_store": {"identity": PLATFORM_DRIVER}}]
+    volttron_instance.add_capabilities(volttron_instance.dynamic_agent.core.publickey, capabilities)
+
+    registry_config = "homeassistant_switch_test.json"
+    registry_obj = [
+        {
+            "Entity ID": HOMEASSISTANT_TEST_SWITCH_ENTITY,
+            "Entity Point": "state",
+            "Volttron Point Name": "switch_state",
+            "Units": "On / Off",
+            "Units Details": "off: 0, on: 1",
+            "Writable": True,
+            "Type": "int",
+            "Notes": "Switch state control"
+        }
+    ]
+
+    volttron_instance.dynamic_agent.vip.rpc.call(
+        CONFIGURATION_STORE,
+        "manage_store",
+        PLATFORM_DRIVER,
+        registry_config,
+        json.dumps(registry_obj),
+        config_type="json"
+    )
+    gevent.sleep(2)
+
+    driver_config = {
+        "driver_config": {
+            "ip_address": HOMEASSISTANT_TEST_IP,
+            "access_token": ACCESS_TOKEN,
+            "port": PORT
+        },
+        "driver_type": "home_assistant",
+        "registry_config": f"config://{registry_config}",
+        "timezone": "US/Pacific",
+        "interval": 30,
+    }
+
+    volttron_instance.dynamic_agent.vip.rpc.call(
+        CONFIGURATION_STORE,
+        "manage_store",
+        PLATFORM_DRIVER,
+        HOMEASSISTANT_SWITCH_DEVICE_TOPIC,
+        json.dumps(driver_config),
+        config_type="json"
+    )
+    gevent.sleep(5)  # Give more time for driver to initialize
+
+    yield platform_driver
+
+    # Cleanup
+    print("Cleaning up switch test configuration.")
+    volttron_instance.dynamic_agent.vip.rpc.call(
+        CONFIGURATION_STORE,
+        "manage_delete_config",
+        PLATFORM_DRIVER,
+        HOMEASSISTANT_SWITCH_DEVICE_TOPIC
+    )
+    gevent.sleep(0.1)
