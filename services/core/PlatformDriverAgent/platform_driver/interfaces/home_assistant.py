@@ -100,13 +100,33 @@ class Interface(BasicRevert, BaseInterface):
 
     def get_point(self, point_name):
         register = self.get_register_by_name(point_name)
+        entity_id = register.entity_id
+        entity_point = register.entity_point
 
         entity_data = self.get_entity_data(register.entity_id)
-        if register.point_name == "state":
-            result = entity_data.get("state", None)
-            return result
+        
+        if entity_point == "state":
+            state = entity_data.get("state", None)
+            
+            # Convert states to numeric values based on entity type
+            if "climate." in entity_id:
+                # Thermostat states
+                state_map = {"off": 0, "heat": 2, "cool": 3, "auto": 4}
+                return state_map.get(state, state)
+            elif "light." in entity_id or "input_boolean." in entity_id:
+                # Light/boolean states
+                state_map = {"off": 0, "on": 1}
+                return state_map.get(state, state)
+            elif "cover." in entity_id:
+                # Cover states
+                state_map = {"closed": 0, "open": 1, "opening": 3, "closing": 4}
+                return state_map.get(state, state)
+            else:
+                # Return raw state for unknown types
+                return state
         else:
-            value = entity_data.get("attributes", {}).get(f"{register.point_name}", 0)
+            value = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
+            _log.info(f"Reading attribute: entity_id={entity_id}, entity_point={entity_point}, value={value}")
             return value
 
     def _set_point(self, point_name, value):
@@ -219,6 +239,26 @@ class Interface(BasicRevert, BaseInterface):
                 error_msg = f"Unexpected point_name {point_name} for switch {register.entity_id}"
                 _log.error(error_msg)
                 raise ValueError(error_msg)
+            
+        elif "cover." in register.entity_id:
+            if entity_point == "state":
+                if isinstance(register.value, int) and register.value in [0, 1, 2]:
+                    if register.value == 0:
+                        self.close_cover(register.entity_id)
+                    elif register.value == 1:
+                        self.open_cover(register.entity_id)
+                    elif register.value == 2:
+                        self.stop_cover(register.entity_id)
+                else:
+                    error_msg = f"State value for {register.entity_id} should be an integer value of 0 (close), 1 (open), or 2 (stop)"
+                    _log.error(error_msg)
+                    raise ValueError(error_msg)
+
+            else:
+                error_msg = f"Unexpected point_name {point_name} for cover {register.entity_id}"
+                _log.error(error_msg)
+                raise ValueError(error_msg)
+                
         else:
             error_msg = f"Unsupported entity_id: {register.entity_id}. " \
                         f"Currently set_point is supported only for thermostats, lights, fans, switches and input_booleans"
@@ -277,8 +317,9 @@ class Interface(BasicRevert, BaseInterface):
                         attribute = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
                         register.value = attribute
                         result[register.point_name] = attribute
+
                 # handling light states
-                elif "light." or "input_boolean." in entity_id: # Checks for lights or input bools since they have the same states.
+                elif "light." in entity_id or "input_boolean." in entity_id: # Checks for lights or input bools since they have the same states.
                     if entity_point == "state":
                         state = entity_data.get("state", None)
                         # Converting light states to numbers.
@@ -324,7 +365,35 @@ class Interface(BasicRevert, BaseInterface):
                         attribute = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
                         register.value = attribute
                         result[register.point_name] = attribute
-                else:  # handling all devices that are not thermostats, lights, or fans
+
+                # handling cover states
+                elif "cover." in entity_id:
+                    if entity_point == "state":
+                        state = entity_data.get("state", None)
+                        if state == "closed":
+                            register.value = 0
+                            result[register.point_name] = 0
+                        elif state == "open":
+                            register.value = 1
+                            result[register.point_name] = 1
+                        elif state == "opening":
+                            register.value = 3
+                            result[register.point_name] = 3
+                        elif state == "closing":
+                            register.value = 4
+                            result[register.point_name] = 4
+                        else:
+                            error_msg = f"State {state} from {entity_id} is not yet supported"
+                            _log.error(error_msg)
+                            raise ValueError(error_msg)
+                    else:
+                        attribute = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
+                        register.value = attribute
+                        result[register.point_name] = attribute
+
+
+                
+                else:  # handling all devices that are not thermostats or light states or covers
                     if entity_point == "state":
 
                         state = entity_data.get("state", None)
@@ -542,3 +611,50 @@ class Interface(BasicRevert, BaseInterface):
             "entity_id": entity_id
         }
         _post_method(url, headers, payload, f"turn off switch {entity_id}")
+        _post_method(url, headers, payload, f"set {entity_id} to {state}")
+
+    def open_cover(self, entity_id):
+        url = f"http://{self.ip_address}:{self.port}/api/services/cover/open_cover"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "entity_id": entity_id,
+        }
+        _post_method(url, headers, payload, f"open cover {entity_id}")
+
+    def close_cover(self, entity_id):
+        url = f"http://{self.ip_address}:{self.port}/api/services/cover/close_cover"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "entity_id": entity_id,
+        }
+        _post_method(url, headers, payload, f"close cover {entity_id}")
+
+    def stop_cover(self, entity_id):
+        url = f"http://{self.ip_address}:{self.port}/api/services/cover/stop_cover"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "entity_id": entity_id,
+        }
+        _post_method(url, headers, payload, f"stop cover {entity_id}")
+
+    # def set_cover_position(self, entity_id, position):
+    #     """Set cover position (0-100, where 0 is closed and 100 is fully open)"""
+    #     url = f"http://{self.ip_address}:{self.port}/api/services/cover/set_cover_position"
+    #     headers = {
+    #         "Authorization": f"Bearer {self.access_token}",
+    #         "Content-Type": "application/json",
+    #     }
+    #     payload = {
+    #         "entity_id": entity_id,
+    #         "position": position,
+    #     }
+    #     _post_method(url, headers, payload, f"set position of {entity_id} to {position}")
