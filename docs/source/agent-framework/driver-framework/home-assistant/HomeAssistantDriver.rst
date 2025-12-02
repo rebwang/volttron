@@ -4,7 +4,7 @@ Home Assistant Driver
 =====================
 
 The Home Assistant driver enables VOLTTRON to read any data point from any Home Assistant controlled device.
-Currently control(write access) is supported only for lights(state and brightness) and thermostats(state and temperature).
+Currently control (write access) is supported for lights (state and brightness), thermostats (state and temperature), and fans (state and percentage speed).
 
 The following diagram shows interaction between platform driver agent and home assistant driver.
 
@@ -62,9 +62,9 @@ Registry Configuration
 
 Registry file can contain one single device and its attributes or a logical group of devices and its
 attributes. Each entry should include the full entity id of the device, including but not limited to home assistant provided prefix
-such as "light.",  "climate." etc. The driver uses these prefixes to convert states into integers.
-Like mentioned before, the driver can only control lights and thermostats but can get data from all devices
-controlled by home assistant
+such as "light.",  "climate.", and "fan." etc. The driver uses these prefixes to convert states into integers.
+Like mentioned before, the driver can control lights, thermostats, and fans, but can get data from all devices
+controlled by Home Assistant.
 
 Each entry in a registry file should also have a 'Entity Point' and a unique value for 'Volttron Point Name'. The 'Entity ID' maps to the device instance, the 'Entity Point' extracts the attribute or state, and 'Volttron Point Name' determines the name of that point as it appears in VOLTTRON.
 
@@ -158,6 +158,44 @@ For thermostats, the state is converted into numbers as follows: "0: Off, 2: hea
        }
    ]
 
+
+Example Fan Registry
+********************
+
+Home Assistant fans are typically exposed under the `fan.` domain. The Home Assistant driver reads fan state and attributes and supports writing the on/off ``state`` and ``percentage`` speed. Fan ``state`` is converted to integers in VOLTTRON: ``on → 1``, ``off → 0``. ``percentage`` must be an integer between 0 and 100.
+
+Below is an example file named ``fan.living_room_fan.json`` which includes common attributes for a single fan instance with entity id ``fan.living_room_fan``:
+
+.. code-block:: json
+
+   [
+       {
+           "Entity ID": "fan.living_room_fan",
+           "Entity Point": "state",
+           "Volttron Point Name": "fan_state",
+           "Units": "On / Off",
+           "Units Details": "off: 0, on: 1",
+           "Writable": true,
+           "Starting Value": 0,
+           "Type": "int",
+           "Notes": "Fan on/off control"
+       },
+       {
+           "Entity ID": "fan.living_room_fan",
+           "Entity Point": "percentage",
+           "Volttron Point Name": "fan_speed",
+           "Units": "Percent",
+           "Units Details": "0-100",
+           "Writable": true,
+           "Starting Value": 0,
+           "Type": "int",
+           "Notes": "Fan speed percentage"
+       }
+   ]
+
+.. note::
+
+Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
 
 
 Transfer the registers files and the config files into the VOLTTRON config store using the commands below:
