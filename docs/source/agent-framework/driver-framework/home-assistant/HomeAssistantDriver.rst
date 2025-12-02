@@ -158,51 +158,6 @@ For thermostats, the state is converted into numbers as follows: "0: Off, 2: hea
        }
    ]
 
-
-Example Fan Registry
-********************
-
-Home Assistant fans are typically exposed under the `fan.` domain. The Home Assistant driver reads fan state and attributes and supports writing the on/off ``state`` and ``percentage`` speed. Fan ``state`` is converted to integers in VOLTTRON: ``on → 1``, ``off → 0``. ``percentage`` must be an integer between 0 and 100.
-
-Below is an example file named ``fan.living_room_fan.json`` which includes common attributes for a single fan instance with entity id ``fan.living_room_fan``:
-
-.. code-block:: json
-
-   [
-       {
-           "Entity ID": "fan.living_room_fan",
-           "Entity Point": "state",
-           "Volttron Point Name": "fan_state",
-           "Units": "On / Off",
-           "Units Details": "off: 0, on: 1",
-           "Writable": true,
-           "Starting Value": 0,
-           "Type": "int",
-           "Notes": "Fan on/off control"
-       },
-       {
-           "Entity ID": "fan.living_room_fan",
-           "Entity Point": "percentage",
-           "Volttron Point Name": "fan_speed",
-           "Units": "Percent",
-           "Units Details": "0-100",
-           "Writable": true,
-           "Starting Value": 0,
-           "Type": "int",
-           "Notes": "Fan speed percentage"
-       }
-   ]
-
-.. note::
-
-Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. 
-Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
-
-The fan's on/off value comes from the entity's primary state (shown as the "State" field in Developer Tools) and does not appear inside the attributes list. 
-Use ``state`` as the ``Entity Point`` to capture this and it will be converted to 1 (on) or 0 (off) by the driver. 
-Names like ``fan_state`` and ``fan_speed`` are user-defined ``Volttron Point Name`` values and need not match Home Assistant attribute keys; they are labels for VOLTTRON topics.
-
-
 Transfer the registers files and the config files into the VOLTTRON config store using the commands below:
 
 .. code-block:: bash
@@ -218,6 +173,99 @@ Upon completion, initiate the platform driver. Utilize the listener agent to ver
    [{'light_brightness': 254, 'state': 'on'},
     {'light_brightness': {'type': 'integer', 'tz': 'UTC', 'units': 'int'},
      'state': {'type': 'integer', 'tz': 'UTC', 'units': 'On / Off'}}]
+
+
+Comprehensive Example of Fan Configuration
+********************
+
+Fan Registry
++++++++++++++++++++++++
+Home Assistant fans are typically exposed under the `fan.` domain. The Home Assistant driver reads fan state and attributes and supports writing the on/off ``state`` and ``percentage`` speed. Fan ``state`` is converted to integers in VOLTTRON: ``on → 1``, ``off → 0``. ``percentage`` must be an integer between 0 and 100.
+
+Below is an example file named ``fan.living_room_fan.json`` which includes common attributes for a single fan instance with entity id ``fan.living_room_fan``:
+
+.. code-block:: json
+
+   [
+        {
+            "Entity ID": "fan.living_room_fan",
+            "Entity Point": "state",
+            "Volttron Point Name": "fan_state",
+            "Units": "On / Off",
+            "Units Details": "off: 0, on: 1",
+            "Writable": true,
+            "Starting Value": 0,
+            "Type": "int",
+            "Notes": "Fan on/off control"
+        },
+        {
+            "Entity ID": "fan.living_room_fan",
+            "Entity Point": "percentage",
+            "Volttron Point Name": "fan_speed",
+            "Units": "Percent",
+            "Units Details": "0-100",
+            "Writable": true,
+            "Starting Value": 0,
+            "Type": "int",
+            "Notes": "Fan speed percentage"
+        }
+   ]
+
+.. note::
+
+Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. 
+Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
+
+The fan's on/off value comes from the entity's primary state (shown as the "State" field in Developer Tools) and does not appear inside the attributes list. 
+Use ``state`` as the ``Entity Point`` to capture this and it will be converted to 1 (on) or 0 (off) by the driver. 
+Names like ``fan_state`` and ``fan_speed`` are user-defined ``Volttron Point Name`` values and need not match Home Assistant attribute keys; they are labels for VOLTTRON topics.
+
+Fan Device Configuration
++++++++++++++++++++++++
+Below is an example device configuration file for the above fan registry:
+
+.. code-block:: json
+    
+   {
+       "driver_config": {
+           "ip_address": "Your Home Assistant IP",
+           "access_token": "Your Home Assistant Access Token",
+           "port": "Your Port"
+       },
+       "driver_type": "home_assistant",
+       "registry_config": "config://fan.living_room_fan.json",
+       "interval": 30,
+       "timezone": "UTC"
+   }
+
+Transfer the registers files and the config files into the VOLTTRON config store using the commands below:
+
+.. code-block:: bash
+    
+   vctl config store platform.driver fan.living_room_fan.json HomeAssistant_Driver/fan.living_room_fan.json
+   vctl config store platform.driver devices/home/living_room/fan.living_room_fan config/fan.living_room_fan.config
+
+Upon completion, initiate the platform driver. Utilize the listener agent to verify the driver output:
+
+.. code-block:: bash
+    vctl status
+    vctl start `UUID-of-platform-driver-agent`
+    vctl start `UUID-of-listener-agent`
+
+View the logs in volttron.log which is located in the root level of your repo. You should see data being displayed from the Listener Agent, which is listening to all data being sent to the Message Bus.
+    
+Example log output:
+
+.. code-block:: bash
+
+    2025-12-01 21:28:00,051 (platform_driveragent-4.0 16005 [223]) platform_driver.driver DEBUG: home/living_room/fan.living_room_fan next scrape scheduled: 2025-12-02 05:28:30.050000+00:00
+    2025-12-01 21:28:00,052 (platform_driveragent-4.0 16005 [227]) platform_driver.driver DEBUG: scraping device: home/living_room/fan.living_room_fan
+    2025-12-01 21:28:00,086 (platform_driveragent-4.0 16005 [288]) platform_driver.driver DEBUG: publishing: devices/home/living_room/fan.living_room_fan/all
+    2025-12-01 21:28:00,089 (listeneragent-3.3 16061 [99]) __main__ INFO: Peer: pubsub, Sender: platform.driver:, Bus: , Topic: devices/home/living_room/fan.living_room_fan/all, Headers: {'Date': '2025-12-02T05:28:00.086514+00:00', 'TimeStamp': '2025-12-02T05:28:00.086514+00:00', 'SynchronizedTimeStamp': '2025-12-02T05:28:00.000000+00:00', 'min_compatible_version': '3.0', 'max_compatible_version': ''}, Message: 
+    [{'fan_speed': 0, 'fan_state': 0},
+    {'fan_speed': {'type': 'integer', 'tz': 'UTC', 'units': 'Percent'},
+    'fan_state': {'type': 'integer', 'tz': 'UTC', 'units': 'On / Off'}}]
+    2025-12-01 21:28:00,089 (platform_driveragent-4.0 16005 [294]) platform_driver.driver DEBUG: finish publishing: devices/home/living_room/fan.living_room_fan/all
 
 Running Tests
 +++++++++++++++++++++++
