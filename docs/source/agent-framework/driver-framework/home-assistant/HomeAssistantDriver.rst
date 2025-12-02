@@ -106,14 +106,11 @@ id 'light.example':
 
 
 .. note::
-
-When using a single registry file to represent a logical group of multiple physical entities, make sure the
-"Volttron Point Name" is unique within a single registry file.
-
-For example, if a registry file contains entities with
-id  'light.instance1' and 'light.instance2' the entry for the attribute brightness for these two light instances could
-have "Volttron Point Name" as 'light1/brightness' and 'light2/brightness' respectively. This would ensure that data
-is posted to unique topic names and brightness data from light1 is not overwritten by light2 or vice-versa.
+    When using a single registry file to represent a logical group of multiple physical entities, make sure the "Volttron Point Name" is unique within a single registry file.
+    For example, if a registry file contains entities with
+    id  'light.instance1' and 'light.instance2' the entry for the attribute brightness for these two light instances could
+    have "Volttron Point Name" as 'light1/brightness' and 'light2/brightness' respectively. This would ensure that data
+    is posted to unique topic names and brightness data from light1 is not overwritten by light2 or vice-versa.
 
 Example Thermostat Registry
 ***************************
@@ -175,11 +172,11 @@ Upon completion, initiate the platform driver. Utilize the listener agent to ver
      'state': {'type': 'integer', 'tz': 'UTC', 'units': 'On / Off'}}]
 
 
-Comprehensive Example of Fan Configuration
-********************
+Comprehensive Fan Configuration Example
++++++++++++++++++++++++++++++++++++++++++
 
-Fan Registry
-+++++++++++++++++++++++
+Fan Registry Configuration
+*****************
 Home Assistant fans are typically exposed under the `fan.` domain. The Home Assistant driver reads fan state and attributes and supports writing the on/off ``state`` and ``percentage`` speed. Fan ``state`` is converted to integers in VOLTTRON: ``on → 1``, ``off → 0``. ``percentage`` must be an integer between 0 and 100.
 
 Below is an example file named ``fan.living_room_fan.json`` which includes common attributes for a single fan instance with entity id ``fan.living_room_fan``:
@@ -212,16 +209,15 @@ Below is an example file named ``fan.living_room_fan.json`` which includes commo
    ]
 
 .. note::
+    Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. 
+    Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
 
-Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. 
-Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
-
-The fan's on/off value comes from the entity's primary state (shown as the "State" field in Developer Tools) and does not appear inside the attributes list. 
-Use ``state`` as the ``Entity Point`` to capture this and it will be converted to 1 (on) or 0 (off) by the driver. 
-Names like ``fan_state`` and ``fan_speed`` are user-defined ``Volttron Point Name`` values and need not match Home Assistant attribute keys; they are labels for VOLTTRON topics.
+    The fan's on/off value comes from the entity's primary state (shown as the "State" field in Developer Tools) and does not appear inside the attributes list. 
+    Use ``state`` as the ``Entity Point`` to capture this and it will be converted to 1 (on) or 0 (off) by the driver.
+    Names like ``fan_state`` and ``fan_speed`` are user-defined ``Volttron Point Name`` values and need not match Home Assistant attribute keys; they are labels for VOLTTRON topics.
 
 Fan Device Configuration
-+++++++++++++++++++++++
+****************************
 Below is an example device configuration file for the above fan registry:
 
 .. code-block:: json
@@ -248,13 +244,12 @@ Transfer the registers files and the config files into the VOLTTRON config store
 Upon completion, initiate the platform driver. Utilize the listener agent to verify the driver output:
 
 .. code-block:: bash
-    vctl status
-    vctl start `UUID-of-platform-driver-agent`
-    vctl start `UUID-of-listener-agent`
 
-View the logs in volttron.log which is located in the root level of your repo. You should see data being displayed from the Listener Agent, which is listening to all data being sent to the Message Bus.
-    
-Example log output:
+    vctl status
+    vctl start <UUID-of-platform-driver-agent>  
+    vctl start <UUID-of-listener-agent>
+
+View the logs in volttron.log which is located in the root level of your repo. You should see data being displayed from the Listener Agent, which is listening to all data being sent to the Message Bus. Example log output:
 
 .. code-block:: bash
 
