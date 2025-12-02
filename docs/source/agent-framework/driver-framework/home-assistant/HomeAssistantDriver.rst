@@ -195,7 +195,12 @@ Below is an example file named ``fan.living_room_fan.json`` which includes commo
 
 .. note::
 
-Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
+Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. 
+Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
+
+The fan's on/off value comes from the entity's primary state (shown as the "State" field in Developer Tools) and does not appear inside the attributes list. 
+Use ``state`` as the ``Entity Point`` to capture this and it will be converted to 1 (on) or 0 (off) by the driver. 
+Names like ``fan_state`` and ``fan_speed`` are user-defined ``Volttron Point Name`` values and need not match Home Assistant attribute keys; they are labels for VOLTTRON topics.
 
 
 Transfer the registers files and the config files into the VOLTTRON config store using the commands below:
@@ -219,6 +224,7 @@ Running Tests
 To run tests on the VOLTTRON home assistant driver you need to create a helper in your home assistant instance. This can be done by going to **Settings > Devices & services > Helpers > Create Helper > Toggle**. Name this new toggle **volttrontest**. After that run the pytest from the root of your VOLTTRON file.
 
 .. code-block:: bash
+
     pytest volttron/services/core/PlatformDriverAgent/tests/test_home_assistant.py
 
 If everything works, you will see 6 passed tests.
