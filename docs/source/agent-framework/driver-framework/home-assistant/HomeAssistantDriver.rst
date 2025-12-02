@@ -106,6 +106,7 @@ id 'light.example':
 
 
 .. note::
+    
     When using a single registry file to represent a logical group of multiple physical entities, make sure the "Volttron Point Name" is unique within a single registry file.
     For example, if a registry file contains entities with
     id  'light.instance1' and 'light.instance2' the entry for the attribute brightness for these two light instances could
@@ -209,6 +210,7 @@ Below is an example file named ``fan.living_room_fan.json`` which includes commo
    ]
 
 .. note::
+
     Available attributes vary by fan integration. To discover attributes for your specific fan entity, use Home Assistant Developer Tools and inspect the ``fan.living_room_fan`` entity to list its state and attributes. 
     Map each desired attribute to an ``Entity Point`` and assign a unique ``Volttron Point Name`` within the registry file.
 
