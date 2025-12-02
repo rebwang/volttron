@@ -236,11 +236,14 @@ Below is an example device configuration file for the above fan registry:
        "timezone": "UTC"
    }
 
+
+Store these two files in your local directory such as ``config/`` using ``mkdir -p config`` if needed. Use ``./start-volttron`` to start volttron if it is not already running.
+
 Transfer the registers files and the config files into the VOLTTRON config store using the commands below:
 
 .. code-block:: bash
-    
-   vctl config store platform.driver fan.living_room_fan.json HomeAssistant_Driver/fan.living_room_fan.json
+
+   vctl config store platform.driver fan.living_room_fan.json config/fan.living_room_fan.json
    vctl config store platform.driver devices/home/living_room/fan.living_room_fan config/fan.living_room_fan.config
 
 Upon completion, initiate the platform driver. Utilize the listener agent to verify the driver output:
