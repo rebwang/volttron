@@ -345,6 +345,88 @@ View the logs in volttron.log which is located in the root level of your repo. Y
     {'switch_state': {'type': 'integer', 'tz': 'UTC', 'units': 'On / Off'}}]
     2025-12-02 15:18:00,098 (platform_driveragent-4.0 12458 [518]) platform_driver.driver DEBUG: finish publishing: devices/home/bedroom/switch.bedroom_outlet/all
 
+
+
+Comprehensive Cover Configuration Example
++++++++++++++++++++++++++++++++++++++++++
+
+Cover Registry Configuration
+*****************
+Home Assistant covers are typically exposed under the ``cover.`` domain. The Home Assistant driver reads cover state and supports writing the on/off ``state``. Cover ``state`` is converted to integers in VOLTTRON: ``on → 1``, ``off → 0``.
+
+Below is an example file named ``cover.hall_window.json`` which includes attributes for a single cover instance with entity id ``cover.hall_window``:
+
+.. code-block:: json
+
+   [
+        {
+            "Entity ID": "cover.hall_window",
+            "Entity Point": "state",
+            "Volttron Point Name": "cover_state",
+            "Units": "",
+            "Units Details": "closed: 0, open: 1, opening: 3, closing: 4",
+            "Writable": true,
+            "Starting Value": 0,
+            "Type": "int",
+            "Notes": "Cover on/off control"
+        }
+   ]
+
+.. note::
+
+    Cover devices provide binary on/off functionality. To inspect the current state of your cover entity, navigate to Home Assistant Developer Tools and examine the entity (e.g., ``cover.hall_window``) to view its status.
+    
+    The Switch on/off status is retrieved from the entity's primary state field (displayed as "State" in Developer Tools) rather than from the attributes dictionary.
+    Configure ``state`` as the ``Entity Point`` to access this value, which the driver automatically converts to 1 (on) or 0 (off).
+    Note that ``cover_state`` represents a user-defined ``Volttron Point Name`` and serves as a label for VOLTTRON topics—it does not need to correspond to any Home Assistant attribute key.
+
+Cover Device Configuration
+****************************
+Below is an example device configuration file for the above cover registry:
+
+.. code-block:: json
+    
+   {
+       "driver_config": {
+           "ip_address": "Your Home Assistant IP",
+           "access_token": "Your Home Assistant Access Token",
+           "port": "Your Port"
+       },
+       "driver_type": "home_assistant",
+       "registry_config": "config://cover.hall_window.json",
+       "interval": 30,
+       "timezone": "UTC"
+   }
+
+Transfer the registers files and the config files into the VOLTTRON config store using the commands below:
+
+.. code-block:: bash
+    
+   vctl config store platform.driver cover.hall_window.json HomeAssistant_Driver/cover.hall_window.json
+   vctl config store platform.driver devices/home/bedroom/cover.hall_window config/cover.hall_window.config
+
+Upon completion, initiate the platform driver. Utilize the listener agent to verify the driver output:
+
+.. code-block:: bash
+
+    vctl status
+    vctl start <UUID-of-platform-driver-agent>  
+    vctl start <UUID-of-listener-agent>
+
+View the logs in volttron.log which is located in the root level of your repo. You should see data being displayed from the Listener Agent, which is listening to all data being sent to the Message Bus. Here is an example log output:
+
+.. code-block:: bash
+
+    2025-12-02 15:18:00,067 (platform_driveragent-4.0 12458 [445]) platform_driver.driver DEBUG: home/hall_window/cover.hall_window next scrape scheduled: 2025-12-02 15:18:30.067000+00:00
+    2025-12-02 15:18:00,068 (platform_driveragent-4.0 12458 [449]) platform_driver.driver DEBUG: scraping device: home/hall_window/cover.hall_window
+    2025-12-02 15:18:00,095 (platform_driveragent-4.0 12458 [512]) platform_driver.driver DEBUG: publishing: devices/home/hall_window/cover.hall_window/all
+    2025-12-02 15:18:00,097 (listeneragent-3.3 12514 [156]) __main__ INFO: Peer: pubsub, Sender: platform.driver:, Bus: , Topic: devices/home/hall_window/cover.hall_window/all, Headers: {'Date': '2025-12-02T23:18:00.095362+00:00', 'TimeStamp': '2025-12-02T23:18:00.095362+00:00', 'SynchronizedTimeStamp': '2025-12-02T23:18:00.000000+00:00', 'min_compatible_version': '3.0', 'max_compatible_version': ''}, Message: 
+    [{'cover_state': 0},
+    {'cover_state': {'type': 'integer', 'tz': 'UTC', 'units': 'On / Off'}}]
+    2025-12-02 15:18:00,098 (platform_driveragent-4.0 12458 [518]) platform_driver.driver DEBUG: finish publishing: devices/home/bedroom/cover.hall_window/all
+
+
+
 Running Tests
 +++++++++++++++++++++++
 To run tests on the VOLTTRON home assistant driver you need to create a helper in your home assistant instance. This can be done by going to **Settings > Devices & services > Helpers > Create Helper > Toggle**. Name this new toggle **volttrontest**. After that run the pytest from the root of your VOLTTRON file.

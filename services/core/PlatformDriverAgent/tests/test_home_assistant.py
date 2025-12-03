@@ -56,12 +56,6 @@ ACCESS_TOKEN = os.environ.get("HOMEASSISTANT_FAN_ACCESS_TOKEN", "")
 PORT = os.environ.get("HOMEASSISTANT_FAN_PORT", "8123")
 HOMEASSISTANT_TEST_FAN_ENTITY = os.environ.get("HOMEASSISTANT_TEST_FAN_ENTITY", "")
 
-# ----------------------------------------------------------------------
-# Cover test configuration
-# HOMEASSISTANT_TEST_IP = os.environ.get("HOMEASSISTANT_TEST_IP", "")
-# ACCESS_TOKEN = os.environ.get("HOMEASSISTANT_ACCESS_TOKEN", "")
-# PORT = os.environ.get("HOMEASSISTANT_PORT", "8123")
-# HOMEASSISTANT_TEST_COVER_ENTITY = os.environ.get("HOMEASSISTANT_TEST_COVER_ENTITY", "cover.hall_window")
 
 skip_msg = (
     "Some configuration variables are not set. "
@@ -159,7 +153,7 @@ def config_store(volttron_instance, platform_driver):
             "Writable": True,
             "Starting Value": 0,
             "Type": "int",
-            "Notes": "Test cover device for integration testing"
+            "Notes": "Cover on/off control"
         }
         ]
 
@@ -654,10 +648,12 @@ def switch_config_store(volttron_instance, platform_driver):
 
 # ==================== COVER TESTS ====================
 
-COVER_TEST_IP = os.environ.get("HOMEASSISTANT_TEST_COVER_IP", "")
-COVER_ACCESS_TOKEN = os.environ.get("HOMEASSISTANT_COVER_ACCESS_TOKEN", "")
-COVER_PORT = os.environ.get("HOMEASSISTANT_COVER_PORT", "8123")
-HOMEASSISTANT_TEST_COVER_ENTITY = os.environ.get("HOMEASSISTANT_TEST_COVER_ENTITY", "")
+
+# Cover test configuration
+HOMEASSISTANT_TEST_IP = os.environ.get("HOMEASSISTANT_TEST_IP", "")
+ACCESS_TOKEN = os.environ.get("HOMEASSISTANT_ACCESS_TOKEN", "")
+PORT = os.environ.get("HOMEASSISTANT_PORT", "8123")
+HOMEASSISTANT_TEST_COVER_ENTITY = os.environ.get("HOMEASSISTANT_TEST_COVER_ENTITY", "cover.hall_window")
 
 skip_cover_tests = pytest.mark.skipif(
     not HOMEASSISTANT_TEST_COVER_ENTITY,
