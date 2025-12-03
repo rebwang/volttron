@@ -144,6 +144,8 @@ class Interface(BasicRevert, BaseInterface):
         register = self.get_register_by_name(point_name)
         entity_id = register.entity_id
         entity_point = register.entity_point
+        entity_id = register.entity_id
+        entity_point = register.entity_point
 
         entity_data = self.get_entity_data(register.entity_id)
         
@@ -166,7 +168,29 @@ class Interface(BasicRevert, BaseInterface):
             else:
                 # Return raw state for unknown types
                 return state
+        
+        if entity_point == "state":
+            state = entity_data.get("state", None)
+            
+            # Convert states to numeric values based on entity type
+            if "climate." in entity_id:
+                # Thermostat states
+                state_map = {"off": 0, "heat": 2, "cool": 3, "auto": 4}
+                return state_map.get(state, state)
+            elif "light." in entity_id or "input_boolean." in entity_id:
+                # Light/boolean states
+                state_map = {"off": 0, "on": 1}
+                return state_map.get(state, state)
+            elif "cover." in entity_id:
+                # Cover states
+                state_map = {"closed": 0, "open": 1, "opening": 3, "closing": 4}
+                return state_map.get(state, state)
+            else:
+                # Return raw state for unknown types
+                return state
         else:
+            value = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
+            _log.info(f"Reading attribute: entity_id={entity_id}, entity_point={entity_point}, value={value}")
             value = entity_data.get("attributes", {}).get(f"{entity_point}", 0)
             _log.info(f"Reading attribute: entity_id={entity_id}, entity_point={entity_point}, value={value}")
             return value
