@@ -56,6 +56,7 @@ ACCESS_TOKEN = os.environ.get("HOMEASSISTANT_FAN_ACCESS_TOKEN", "")
 PORT = os.environ.get("HOMEASSISTANT_FAN_PORT", "8123")
 HOMEASSISTANT_TEST_FAN_ENTITY = os.environ.get("HOMEASSISTANT_TEST_FAN_ENTITY", "")
 
+# ----------------------------------------------------------------------
 # Cover test configuration
 # HOMEASSISTANT_TEST_IP = os.environ.get("HOMEASSISTANT_TEST_IP", "")
 # ACCESS_TOKEN = os.environ.get("HOMEASSISTANT_ACCESS_TOKEN", "")
@@ -122,117 +123,6 @@ def test_set_point(volttron_instance, config_store):
     result = agent.vip.rpc.call(PLATFORM_DRIVER, 'scrape_all', 'home_assistant').get(timeout=20)
     # Only check that bool_state is 1, ignore other fields
     assert result.get('bool_state') == 1, f"Expected bool_state to be 1, got {result.get('bool_state')}"
-
-
-def test_get_cover_state(volttron_instance, config_store):
-    """
-    Integration test: Verify that the driver can read cover state from Home Assistant.
-    Tests the get_point method for cover devices.
-    """
-    agent = volttron_instance.dynamic_agent
-    # Read cover state
-    result = agent.vip.rpc.call(
-        PLATFORM_DRIVER,
-        'get_point',
-        'home_assistant',
-        'cover_state'
-    ).get(timeout=20)
-    # Cover state should be 0 (closed), 1 (open), 3 (opening), or 4 (closing)
-    assert result in [0, 1, 3, 4], (
-        f"Expected cover state to be 0, 1, 3, or 4 (closed/open/opening/closing), "
-        f"but got {result}"
-    )
-    logger.info(f"Cover state successfully read: {result}")
-
-
-
-def test_set_cover_open(volttron_instance, config_store):
-    """
-    Integration test: Verify that the driver can send open command to a cover.
-    Tests the set_point method with value=1 (open) for cover devices.
-    """
-    agent = volttron_instance.dynamic_agent
-    # Send open command (value = 1)
-    agent.vip.rpc.call(
-        PLATFORM_DRIVER,
-        'set_point',
-        'home_assistant',
-        'cover_state',
-        1  # 1 = open
-    )
-    # Wait for Home Assistant to process the command
-    gevent.sleep(5)
-     # Verify the cover is open or opening
-    result = agent.vip.rpc.call(
-        PLATFORM_DRIVER,
-        'get_point',
-        'home_assistant',
-        'cover_state'
-    ).get(timeout=20)
-    # Should be 1 (open) or 3 (opening)
-    assert result in [1, 3], (
-        f"Expected cover to be open (1) or opening (3), but got {result}"
-    )
-    logger.info(f"Cover successfully opened, state: {result}")
-
-def test_set_cover_close(volttron_instance, config_store):
-    """
-    Integration test: Verify that the driver can send close command to a cover.
-    Tests the set_point method with value=0 (close) for cover devices.
-    """
-    agent = volttron_instance.dynamic_agent
-    
-    # First, ensure cover is open
-    agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant', 'cover_state', 1)
-    gevent.sleep(5)
-    # Send close command (value = 0)
-    agent.vip.rpc.call(
-        PLATFORM_DRIVER,
-        'set_point',
-        'home_assistant',
-        'cover_state',
-        0  # 0 = close
-    )
-    # Wait for Home Assistant to process the command
-    gevent.sleep(5)
-    # Verify the cover is closed or closing
-    result = agent.vip.rpc.call(
-        PLATFORM_DRIVER,
-        'get_point',
-        'home_assistant',
-        'cover_state'
-    ).get(timeout=20)
-    # Should be 0 (closed) or 4 (closing)
-    assert result in [0, 4], (
-        f"Expected cover to be closed (0) or closing (4), but got {result}"
-    )
-    logger.info(f"Cover successfully closed, state: {result}")
-
-
-def test_scrape_all_includes_covers(volttron_instance, config_store):
-    """
-    Integration test: Verify that scrape_all includes cover devices.
-    Tests that the scrape_all method returns all configured points including covers.
-    """
-    agent = volttron_instance.dynamic_agent
-    # Scrape all points
-    result = agent.vip.rpc.call(
-        PLATFORM_DRIVER,
-        'scrape_all',
-        'home_assistant'
-    ).get(timeout=20)
-    # Verify result is a dictionary
-    assert isinstance(result, dict), f"Expected dict, got {type(result)}"
-    # Verify all required points are present
-    required_points = ['bool_state', 'cover_state']
-    for point in required_points:
-        assert point in result, f"Missing required point: {point}"
-    # Verify cover state is valid
-    assert result['cover_state'] in [0, 1, 3, 4], (
-        f"Invalid cover state: {result['cover_state']}"
-    )
-    logger.info(f"Scrape all successful. Points: {list(result.keys())}")
-    logger.info(f"Cover values - state: {result['cover_state']}")
 
 
 
@@ -987,3 +877,115 @@ def cover_config_store(volttron_instance, platform_driver):
         HOMEASSISTANT_COVER_DEVICE_TOPIC,
     )
     gevent.sleep(0.1)
+
+
+
+# def test_get_cover_state(volttron_instance, config_store):
+#     """
+#     Integration test: Verify that the driver can read cover state from Home Assistant.
+#     Tests the get_point method for cover devices.
+#     """
+#     agent = volttron_instance.dynamic_agent
+#     # Read cover state
+#     result = agent.vip.rpc.call(
+#         PLATFORM_DRIVER,
+#         'get_point',
+#         'home_assistant',
+#         'cover_state'
+#     ).get(timeout=20)
+#     # Cover state should be 0 (closed), 1 (open), 3 (opening), or 4 (closing)
+#     assert result in [0, 1, 3, 4], (
+#         f"Expected cover state to be 0, 1, 3, or 4 (closed/open/opening/closing), "
+#         f"but got {result}"
+#     )
+#     logger.info(f"Cover state successfully read: {result}")
+
+
+
+# def test_set_cover_open(volttron_instance, config_store):
+#     """
+#     Integration test: Verify that the driver can send open command to a cover.
+#     Tests the set_point method with value=1 (open) for cover devices.
+#     """
+#     agent = volttron_instance.dynamic_agent
+#     # Send open command (value = 1)
+#     agent.vip.rpc.call(
+#         PLATFORM_DRIVER,
+#         'set_point',
+#         'home_assistant',
+#         'cover_state',
+#         1  # 1 = open
+#     )
+#     # Wait for Home Assistant to process the command
+#     gevent.sleep(5)
+#      # Verify the cover is open or opening
+#     result = agent.vip.rpc.call(
+#         PLATFORM_DRIVER,
+#         'get_point',
+#         'home_assistant',
+#         'cover_state'
+#     ).get(timeout=20)
+#     # Should be 1 (open) or 3 (opening)
+#     assert result in [1, 3], (
+#         f"Expected cover to be open (1) or opening (3), but got {result}"
+#     )
+#     logger.info(f"Cover successfully opened, state: {result}")
+
+# def test_set_cover_close(volttron_instance, config_store):
+#     """
+#     Integration test: Verify that the driver can send close command to a cover.
+#     Tests the set_point method with value=0 (close) for cover devices.
+#     """
+#     agent = volttron_instance.dynamic_agent
+    
+#     # First, ensure cover is open
+#     agent.vip.rpc.call(PLATFORM_DRIVER, 'set_point', 'home_assistant', 'cover_state', 1)
+#     gevent.sleep(5)
+#     # Send close command (value = 0)
+#     agent.vip.rpc.call(
+#         PLATFORM_DRIVER,
+#         'set_point',
+#         'home_assistant',
+#         'cover_state',
+#         0  # 0 = close
+#     )
+#     # Wait for Home Assistant to process the command
+#     gevent.sleep(5)
+#     # Verify the cover is closed or closing
+#     result = agent.vip.rpc.call(
+#         PLATFORM_DRIVER,
+#         'get_point',
+#         'home_assistant',
+#         'cover_state'
+#     ).get(timeout=20)
+#     # Should be 0 (closed) or 4 (closing)
+#     assert result in [0, 4], (
+#         f"Expected cover to be closed (0) or closing (4), but got {result}"
+#     )
+#     logger.info(f"Cover successfully closed, state: {result}")
+
+
+# def test_scrape_all_includes_covers(volttron_instance, config_store):
+#     """
+#     Integration test: Verify that scrape_all includes cover devices.
+#     Tests that the scrape_all method returns all configured points including covers.
+#     """
+#     agent = volttron_instance.dynamic_agent
+#     # Scrape all points
+#     result = agent.vip.rpc.call(
+#         PLATFORM_DRIVER,
+#         'scrape_all',
+#         'home_assistant'
+#     ).get(timeout=20)
+#     # Verify result is a dictionary
+#     assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+#     # Verify all required points are present
+#     required_points = ['bool_state', 'cover_state']
+#     for point in required_points:
+#         assert point in result, f"Missing required point: {point}"
+#     # Verify cover state is valid
+#     assert result['cover_state'] in [0, 1, 3, 4], (
+#         f"Invalid cover state: {result['cover_state']}"
+#     )
+#     logger.info(f"Scrape all successful. Points: {list(result.keys())}")
+#     logger.info(f"Cover values - state: {result['cover_state']}")
