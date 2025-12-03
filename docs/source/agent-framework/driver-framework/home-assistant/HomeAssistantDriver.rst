@@ -330,17 +330,17 @@ Upon completion, initiate the platform driver. Utilize the listener agent to ver
     vctl start <UUID-of-platform-driver-agent>  
     vctl start <UUID-of-listener-agent>
 
-View the logs in volttron.log which is located in the root level of your repo. You should see data being displayed from the Listener Agent, which is listening to all data being sent to the Message Bus. Example log output:
+View the logs in volttron.log which is located in the root level of your repo. You should see data being displayed from the Listener Agent, which is listening to all data being sent to the Message Bus. Here is an example log output:
 
 .. code-block:: bash
 
-    2025-12-02 15:18:00,067 (platform_driveragent-4.0 12458 [223]) platform_driver.driver DEBUG: home/bedroom/switch.bedroom_outlet next scrape scheduled: 2025-12-02 15:18:30.067000+00:00
-    2025-12-02 15:18:00,068 (platform_driveragent-4.0 12458 [227]) platform_driver.driver DEBUG: scraping device: home/bedroom/switch.bedroom_outlet
-    2025-12-02 15:18:00,095 (platform_driveragent-4.0 12458 [288]) platform_driver.driver DEBUG: publishing: devices/home/bedroom/switch.bedroom_outlet/all
-    2025-12-02 15:18:00,097 (listeneragent-3.3 12514 [99]) __main__ INFO: Peer: pubsub, Sender: platform.driver:, Bus: , Topic: devices/home/bedroom/switch.bedroom_outlet/all, Headers: {'Date': '2025-12-02T23:18:00.095362+00:00', 'TimeStamp': '2025-12-02T23:18:00.095362+00:00', 'SynchronizedTimeStamp': '2025-12-02T23:18:00.000000+00:00', 'min_compatible_version': '3.0', 'max_compatible_version': ''}, Message: 
+    2025-12-02 15:18:00,067 (platform_driveragent-4.0 12458 [445]) platform_driver.driver DEBUG: home/bedroom/switch.bedroom_outlet next scrape scheduled: 2025-12-02 15:18:30.067000+00:00
+    2025-12-02 15:18:00,068 (platform_driveragent-4.0 12458 [449]) platform_driver.driver DEBUG: scraping device: home/bedroom/switch.bedroom_outlet
+    2025-12-02 15:18:00,095 (platform_driveragent-4.0 12458 [512]) platform_driver.driver DEBUG: publishing: devices/home/bedroom/switch.bedroom_outlet/all
+    2025-12-02 15:18:00,097 (listeneragent-3.3 12514 [156]) __main__ INFO: Peer: pubsub, Sender: platform.driver:, Bus: , Topic: devices/home/bedroom/switch.bedroom_outlet/all, Headers: {'Date': '2025-12-02T23:18:00.095362+00:00', 'TimeStamp': '2025-12-02T23:18:00.095362+00:00', 'SynchronizedTimeStamp': '2025-12-02T23:18:00.000000+00:00', 'min_compatible_version': '3.0', 'max_compatible_version': ''}, Message: 
     [{'switch_state': 0},
     {'switch_state': {'type': 'integer', 'tz': 'UTC', 'units': 'On / Off'}}]
-    2025-12-02 15:18:00,098 (platform_driveragent-4.0 12458 [294]) platform_driver.driver DEBUG: finish publishing: devices/home/bedroom/switch.bedroom_outlet/all
+    2025-12-02 15:18:00,098 (platform_driveragent-4.0 12458 [518]) platform_driver.driver DEBUG: finish publishing: devices/home/bedroom/switch.bedroom_outlet/all
 
 Running Tests
 +++++++++++++++++++++++
