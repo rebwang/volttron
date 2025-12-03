@@ -291,11 +291,11 @@ Below is an example file named ``switch.bedroom_outlet.json`` which includes att
 
 .. note::
 
-    Switches support simple on/off control. To discover the state for your specific switch entity, use Home Assistant Developer Tools and inspect the ``switch.bedroom_outlet`` entity to view its state. 
+    Switch devices provide binary on/off functionality. To inspect the current state of your switch entity, navigate to Home Assistant Developer Tools and examine the entity (e.g., ``switch.bedroom_outlet``) to view its status.
     
-    The switch's on/off value comes from the entity's primary state (shown as the "State" field in Developer Tools) and does not appear inside the attributes list. 
-    Use ``state`` as the ``Entity Point`` to capture this and it will be converted to 1 (on) or 0 (off) by the driver.
-    The name ``switch_state`` is a user-defined ``Volttron Point Name`` value and need not match Home Assistant attribute keys; it is a label for VOLTTRON topics.
+    The Switch on/off status is retrieved from the entity's primary state field (displayed as "State" in Developer Tools) rather than from the attributes dictionary.
+    Configure ``state`` as the ``Entity Point`` to access this value, which the driver automatically converts to 1 (on) or 0 (off).
+    Note that ``switch_state`` represents a user-defined ``Volttron Point Name`` and serves as a label for VOLTTRON topics—it does not need to correspond to any Home Assistant attribute key.
 
 Switch Device Configuration
 ****************************
